@@ -1,0 +1,163 @@
+<!--<div clas="watermark-div">
+  <img class="watermark-img" [src]="getExpiredWaterMark()" />
+</div>-->
+<div class="container view-badge-component" [class.bg-overlay-expired]="shouldWatermarkExpired(model)" [class.bg-overlay-invalid]="shouldWatermarkInvalid(model)">
+<div class="row">
+  <div class="col-2 vertical-text left-contractor-panel text-centered" [style.font-size.vw]="8.33*1" [style.z-index]="-1" [style.background-color]="'#'+model.customer.vcSiteColor1" [style.color]="'#'+model.customer.vcSiteColor2">{{!!model.custDigitalBadgeLeftPanelText?model.custDigitalBadgeLeftPanelText:"CONTRACTOR"}}</div>
+  <div class="col-10">
+    <!-- next row: blank spacer row? -->
+    <div class="row" [style.max-height.px]="6">
+      <div class="col-12">&nbsp;</div>
+    </div>
+    <!-- first row - the logo -->
+    <div class="row" *ngIf="!model.custDigitalBadgeHideLogo">
+      <div class="col-3"></div>
+      <div class="col-6" [style.z-index]="1">
+        <img class="main-customer-logo"  [src]="model.customer.vcLogoDataUri" />
+      </div>
+      <div class="col-3"></div>
+    </div>
+    <!-- next row: Continuos Monitoring -->
+    
+    <div class="row" *ngIf="model.individual.srNo=='Y' && !model.custDigitalBadgeHideCM">
+      <div class="col-12 continuous-monitoring text-centered" [style.font-size.em]="0.65" [style.z-index]="1">
+      Continuous Monitoring
+      </div>
+    </div>
+    <!-- next row: Compliance Expiration -->
+    <div class="row">
+      <div class="col-12 text-centered" [style.font-size.em]="0.65" [style.z-index]="1">Expires on {{ model.badge.vbExpirationDt }}</div>
+    </div>
+    <!-- next row: Individual Image -->
+    <div class="row" *ngIf="!model.custDigitalBadgeHideIndividualImage">
+      <!--div class="col-1"></div-->
+      <div class="col-12 individual-image-container" [style.z-index]="-1">
+        <img class="individual-image" [src]="computeDataURIForIndividual(model)" />
+      </div>
+      <!--div class="col-2"></div-->
+    </div>
+    <!-- next row: First Name Last Name 
+      TODO: BOLD the name!
+    -->
+    <div class="row">
+      <div class="col-12 text-centered" [style.font-weight]="bold">
+        {{ model.individual.viFirstName }} {{ model.individual.viLastName }}
+      </div>
+    </div>
+    <!-- next row: Badge Number -->
+    <div class="row">
+      <div class="col-12 text-centered" [style.font-size.em]="0.65">
+        Badge #{{ model.badge.vbBadgeNumber }}
+      </div>
+    </div>
+    <!-- next row: expired/compliance section  -->
+    <div class="row" *ngIf="model.isBadgeVerification">
+      <div *ngIf="model.individual.viIndividualComplStatus=='400'" class="col-12 text-centered compliant">COMPLIANT</div>
+      <div *ngIf="model.individual.viIndividualComplStatus!='400'" class="col-12 text-centered non-compliant">NON-COMPLIANT</div>
+    </div>
+    <div class="row" *ngIf="!model.isBadgeVerification">
+      <div class="col-12 text-centered badge-expired" *ngIf="model.isBadgeExpired">Badge Expired</div>
+      <div *ngIf="!model.isBadgeExpired" class="col-12">&nbsp;</div>
+    </div>
+    <!-- next row: blank spacer row? 
+    <div class="row">
+      <div class="col-12">&nbsp;</div>
+    </div>-->
+    <!-- next row: Vendors List and QRCode -->
+    <div class="row" >
+      <div class="col-8" [style.z-index]="-1">
+        <div *ngFor="let vendor of model.vendorIndividualAssociations">
+          {{ vendor.vvName }}
+        </div>
+      </div>
+      <div class="col-4" *ngIf="!model.isBadgeVerification" (click)="model.isBadgeVerification=true">
+        
+        <qrcode class="qr-code" [qrdata]="getBadgeLink(model)" [size]="256" [level]="'M'" [usesvg]="true"></qrcode>
+        
+      </div>
+    </div>
+
+    
+
+
+
+  </div>
+</div>
+
+<fieldset *ngIf="debug"><legend>Debug (ignore content below this point) <input type="checkbox" [(ngModel)]="debug" /></legend>
+<div class="container-fluid">
+<div class="row">
+  <div class="col-9">
+    <label> ComplStatus: 
+  <select class="form-control" [(ngModel)]="model.individual.viIndividualComplStatus" placeholder="status">
+    <option value="400">COMPLIANT</option>
+    <option value="401">NON-COMPLIANT</option>
+    <option value="402">Need To Order</option>
+    <option value="403">In Progress</option>
+    <option value="404">Pending</option>
+  </select>
+  </label>
+  </div>
+  <div class="col-3">
+    <label>Validation Link?
+  <input class="form-control" type="checkbox" [(ngModel)]="model.isBadgeVerification" />
+  </label>
+  </div>
+
+
+</div>
+<div class="row">
+  <div class="col-4">
+    <button class="btn-primary" (click)="addNewVendorAssociation()">Add Vendor</button>
+  </div>
+  <div class="col-4">
+    <label>Expired?
+  <input class="form-control" type="checkbox" [(ngModel)]="model.isBadgeExpired" />
+  </label>
+  </div>
+  <div class="col-4">
+    <label> CM?
+      <select class="form-control" [(ngModel)]="model.individual.srNo">
+        <option value="Y">Y</option>
+          <option value="N">N</option>
+      </select>
+    </label>
+  </div>
+  
+</div>
+<div class="row">
+  <div class="col-4">
+    LeftPanelText:
+  </div>
+  <div class="col-8">
+    <input class="form-control" type="text" [(ngModel)]="model.custDigitalBadgeLeftPanelText" />
+  </div>
+</div>
+<div class="row">
+  <div class="col-9">
+    HideLogo:
+  </div>
+  <div class="col-3">
+    <input class="form-control" type="checkbox" [(ngModel)]="model.custDigitalBadgeHideLogo" />
+  </div>
+</div>
+<div class="row">
+  <div class="col-9">
+    HideCM:
+  </div>
+  <div class="col-3">
+    <input class="form-control" type="checkbox" [(ngModel)]="model.custDigitalBadgeHideCM" />
+  </div>
+</div>
+<div class="row">
+  <div class="col-9">
+    HideIndividualImage:
+  </div>
+  <div class="col-3">
+    <input class="form-control" type="checkbox" [(ngModel)]="model.custDigitalBadgeHideIndividualImage" />
+  </div>
+</div>
+
+</div>
+</fieldset>
+</div>
